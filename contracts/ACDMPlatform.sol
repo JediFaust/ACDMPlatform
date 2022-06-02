@@ -3,12 +3,12 @@
 pragma solidity ^0.8.4;
 
 
-import "./ACDMToken.sol";
+import "./interfaces/IERC20MintBurn.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @title DAO contract with voting and ERC20 compatibility
-/// @author Omur Kubanychbekov
+/// @author github.com/JediFaust
 /// @notice You can use this contract for make DAO and votings
 /// @dev All functions tested successfully and have no errors
 
@@ -29,7 +29,7 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
     mapping(address => address) private _refererOf;
     mapping(uint256 => Order) private _orderbook;
 
-    ACDMToken private _token;
+    IERC20MintBurn private _token;
 
     struct Order {
         address seller;
@@ -92,7 +92,7 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
      */
     constructor(address token) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _token = ACDMToken(token);
+        _token = IERC20MintBurn(token);
     }
 
 

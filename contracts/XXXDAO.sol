@@ -3,12 +3,12 @@
 pragma solidity ^0.8.4;
 
 
-import "./XXXStake.sol";
+import "./interfaces/IStake.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @title DAO contract with voting and ERC20 compatibility
-/// @author Omur Kubanychbekov
+/// @author github.com/JediFaust
 /// @notice You can use this contract for make DAO and votings
 /// @dev All functions tested successfully and have no errors
 
@@ -19,7 +19,7 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
     uint256 private _minQuorum;
     uint256 private _debatePeriod;
     uint256 private _proposalID;
-    XXXStake private _stake;
+    IStake private _stake;
 
     struct Proposal {
         uint256 finishTime; 
@@ -74,7 +74,7 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
     function setStakeContract(address stake) external
         onlyRole(DEFAULT_ADMIN_ROLE) returns(bool) {
             _grantRole(STAKE, stake);
-            _stake = XXXStake(stake);
+            _stake = IStake(stake);
 
             return true;
         } 

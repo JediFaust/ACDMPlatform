@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 /// @title XXX Token contract with ERC20 compatibility
-/// @author Omur Kubanychbekov
+/// @author github.com/JediFaust
 /// @dev All functions tested successfully and have no errors
 
 contract XXXToken is ERC20, ERC20Burnable, AccessControl {

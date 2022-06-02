@@ -6,11 +6,11 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "./XXXDAO.sol";
+import "./interfaces/IDAO.sol";
 
 
 /// @title Staking JDT Tokens contract
-/// @author Omur Kubanychbekov, github.com/JediFaust
+/// @author github.com/JediFaust
 /// @notice You can use this contract for staking JDT Tokens
 /// @dev All functions tested successfully and have no errors
 
@@ -22,7 +22,7 @@ contract XXXStake is AccessControl, ReentrancyGuard {
     uint256 private _rewardRate;
     mapping(address => Staker) private _stakers;
 
-    XXXDAO private _dao;
+    IDAO private _dao;
     ERC20 private _lpToken;
     ERC20 private _rewardToken;
 
@@ -44,7 +44,7 @@ contract XXXStake is AccessControl, ReentrancyGuard {
         _rewardRate = 7 days;
         _lockTime = 7 days;
 
-        _dao = XXXDAO(dao);
+        _dao = IDAO(dao);
         _lpToken = ERC20(lpToken);
         _rewardToken = ERC20(rewardToken);
     }
