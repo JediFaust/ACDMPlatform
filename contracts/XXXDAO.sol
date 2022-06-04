@@ -59,7 +59,10 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
 
 
     /// @notice Event that notices about added new proposal
-    event NewProposal(uint256 indexed id, address recipient, string description);
+    event NewProposal(
+        uint256 indexed id,
+        address recipient,
+        string description);
     
     /// @notice Event that notices about finished proposal
     event FinishedProposal(
@@ -99,7 +102,8 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
     
     /// @notice can be called by anyone to deposit tokens
     /// @return true if deposit set to zero
-    function emptyDeposit(address voter) external onlyRole(STAKE) returns(bool) {
+    function emptyDeposit(address voter) external
+        onlyRole(STAKE) returns(bool) {
             _voters[voter].votes = 0;
 
             return true;
