@@ -1,4 +1,4 @@
-<h1 align="center"><b>JeDAO smart contract with votes</b></h3>
+<h1 align="center"><b>ACDM Platform</b></h3>
 
 <div align="left">
 
@@ -10,7 +10,7 @@
 
 ---
 
-<p align="center"><h2 align="center"><b>Solidity Smart contract for DAO voting 
+<p align="center"><h2 align="center"><b> Platform for trade and sale tokens with Staking and DAO
     </h2></b><br> 
 </p>
 
@@ -18,13 +18,20 @@
 
 - [EtherScan Link](#etherscan)
 - [Installing](#install)
-- [Contract Functions](#functions)
 - [Deploy & Test Scripts](#scripts)
 - [HardHat Tasks](#tasks)
 
 ## 🚀 Link on EtherScan <a name = "etherscan"></a>
-JeDAO on Etherscan: <br>
-https://rinkeby.etherscan.io/address/0x4C978293CD41816CDD1C29EEA1912eFfcbDB2902#code<br>
+XXXToken on Etherscan: <br>
+https://rinkeby.etherscan.io/address/0xE6F6509434f176cB746f9D86bD7D212094Cfb66a#code<br>
+ACDMToken on Etherscan: <br>
+https://rinkeby.etherscan.io/address/0x73a37a923Ed7FE42F45Ff6A5F8A7104Aa2129aCf#code<br>
+XXXStake on Etherscan: <br>
+https://rinkeby.etherscan.io/address/0x5C1484aB1b347ca253a6C8697ed936741edE3831#code<br>
+XXXDAO on Etherscan: <br>
+https://rinkeby.etherscan.io/address/0xAcd7D1CA4cd6758b331d2e981A637df25d0400e2#code<br>
+ACDMPlatform on Etherscan: <br>
+https://rinkeby.etherscan.io/address/0x44D3394E146541C7a5F64a55b391c667288F9B43#code<br>
 
 
 
@@ -35,32 +42,7 @@ https://rinkeby.etherscan.io/address/0x4C978293CD41816CDD1C29EEA1912eFfcbDB2902#
 ```shell
 node scripts/deploy.ts
 ```
-- Copy address of deployed contract and paste to .env file as CONTRACT_ADDRESS_DAO
-- Use <b>deposit</b>, <b>add-proposal</b>, <b>vote</b> and <b>finish</b> functions
-
-
-
-
-## ⛓️ Contract Functions <a name = "functions"></a>
-
-- **addProposal()**
->Add new proposal<br>
->Only chairman can call<br>
-
-- **deposit()**
->Deposit tokens to vote<br>
-
-- **vote()**
->Actual voting with id of proposal and votes amount with for or against<br>
-
-- **finishProposal()**
->Finish proposal with current ID<br>
-
-- **withdraw()**
->Withdraw deposited tokens with given amount<br>
-
-
-
+- Copy address of deployed contracts and paste to .env file
 
 
 
@@ -71,6 +53,7 @@ node scripts/deploy.ts
 
 ```shell
 node scripts/deploy.js
+node scripts/deployXXXToken.ts
 npx hardhat test  --network hardhat
 ```
 
@@ -79,10 +62,15 @@ npx hardhat test  --network hardhat
 
 
 ```shell
-npx hardhat deposit --amount
-npx hardhat add-proposal --calldata --recipient --description 
-npx hardhat vote --id --amount --for
-npx hardhat finish --id
+npx hardhat register
+npx hardhat register-with-referer --address
+npx hardhat start-sale-round
+npx hardhat buy --value
+npx hardhat start-trade-round
+npx hardhat add-order --price --amount
+npx hardhat remove-order --id
+npx hardhat redeem-order --id --amount --value
+  
 ```
 ```
 
