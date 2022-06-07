@@ -1,25 +1,60 @@
+/* eslint-disable prefer-const */
 // We require the Hardhat Runtime Environment explicitly here. This is optional
 // but useful for running the script in a standalone fashion through `node <script>`.
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
+import { Contract } from "ethers";
 
 async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
+  let acdmToken: Contract;
+  let xxxDAO: Contract;
+  let xxxStake: Contract;
+  let acdmPlatform: Contract;
 
-  // We get the contract to deploy
-  const Greeter = await ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
+  const totalAmount = 10000000;
+  const threeDays = 3 * 24 * 60 * 60;
 
-  await greeter.deployed();
+  const ACDMToken = await ethers.getContractFactory("ACDMToken");
+  acdmToken = <Contract>(
+    await ACDMToken.deploy("ACDMToken", "ACDM", totalAmount)
+  );
+  await acdmToken.deployed();
 
-  console.log("Greeter deployed to:", greeter.address);
+  console.log("ACDMToken deployed to:", acdmToken.address);
+
+  const DAO = await ethers.getContractFactory("XXXDAO");
+  xxxDAO = <Contract>(
+    await DAO.deploy(process.env.CHAIRMAN_ADDRESS, totalAmount / 4, threeDays)
+  );
+  await xxxDAO.deployed();
+
+  console.log("XXXDAO deployed to:", xxxDAO.address);
+
+  const Staking = await ethers.getContractFactory("XXXStake");
+  xxxStake = <Contract>(
+    await Staking.deploy(
+      process.env.CONTRACT_ADDRESS_XXXLP,
+      process.env.CONTRACT_ADDRESS_XXX,
+      xxxDAO.address
+    )
+  );
+  await xxxStake.deployed();
+
+  await xxxDAO.setStakeContract(xxxStake.address);
+
+  console.log("XXXStake deployed to:", xxxStake.address);
+
+  const ACDMPlatform = await ethers.getContractFactory("ACDMPlatform");
+  acdmPlatform = <Contract>(
+    await ACDMPlatform.deploy(acdmToken.address, xxxDAO.address)
+  );
+  await acdmPlatform.deployed();
+
+  console.log("ACDMPlatform deployed to:", acdmPlatform.address);
+
+  await acdmToken.setMinter(acdmPlatform.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
