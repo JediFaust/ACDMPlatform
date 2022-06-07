@@ -36,8 +36,8 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
         mapping(uint256 => uint256) votedAmount;
     }
     
-    mapping(uint256 => Proposal) private _proposals;
-    mapping(address => Voter) private _voters;
+    mapping(uint256 => Proposal) public proposals;
+    mapping(address => Voter) public voters;
 
     /// @notice Deploys the contract with the initial parameters
     /// (chairman, voteToken, minimumQuorum, debatingPeriodDuration)
@@ -86,7 +86,7 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
     /// @return true if staker can unstake
     function canUnstake(address staker) external view
         onlyRole(STAKE) returns(bool) {
-            return block.timestamp >= _voters[staker].withdrawTime;
+            return block.timestamp >= voters[staker].withdrawTime;
         }
 
 
@@ -94,7 +94,7 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
     /// @dev gets the staked amount as votes deposit
     /// @return true if deposit is successful
     function deposit() external returns(bool) {
-            _voters[msg.sender].votes = _stake.getVotes(msg.sender);
+            voters[msg.sender].votes = _stake.getVotes(msg.sender);
 
             return true;
         }
@@ -104,7 +104,7 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
     /// @return true if deposit set to zero
     function emptyDeposit(address voter) external
         onlyRole(STAKE) returns(bool) {
-            _voters[voter].votes = 0;
+            voters[voter].votes = 0;
 
             return true;
         }
@@ -120,7 +120,7 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
         address _recipient,
         string memory description
     ) external onlyRole(CHAIRMAN) returns(uint256) {
-        Proposal storage newProposal = _proposals[_proposalID];
+        Proposal storage newProposal = proposals[_proposalID];
 
         emit NewProposal(_proposalID, _recipient, description);
 
@@ -146,12 +146,12 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
         uint256 amount,
         bool isVoteFor
     ) external returns(bool) {
-        Proposal storage proposal = _proposals[proposalID];
-        Voter storage voter = _voters[msg.sender];
+        Proposal storage proposal = proposals[proposalID];
+        Voter storage voter = voters[msg.sender];
 
         require(proposal.finishTime > 0, "Proposal is not active");
         require(
-            voter.votes - voter.votedAmount[proposalID] >= amount,
+            amount + voter.votedAmount[proposalID] <= voter.votes,
             "Not enough votes");
 
         if(isVoteFor) {
@@ -177,7 +177,7 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
     /// @notice sets finishTime to 0 so it can't be called again
     /// @return true if proposal is finished successfully
     function finishProposal(uint256 proposalID) external returns(bool) {
-        Proposal storage proposal = _proposals[proposalID];
+        Proposal storage proposal = proposals[proposalID];
         require(
             proposal.finishTime > 0,
             "Proposal is not active");
@@ -186,7 +186,7 @@ contract XXXDAO is AccessControl, ReentrancyGuard {
             "Finish time not come");
         require(
             proposal.votesFor + proposal.votesAgainst >= _minQuorum,
-            "Not enough votes");
+            "Quorum not reached");
 
         proposal.finishTime = 0;
 

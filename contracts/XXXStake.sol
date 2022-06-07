@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./interfaces/IDAO.sol";
+import "./interfaces/IERC20MintBurn.sol";
 
 
 /// @title Staking JDT Tokens contract
@@ -24,7 +25,7 @@ contract XXXStake is AccessControl, ReentrancyGuard {
 
     IDAO private _dao;
     ERC20 private _lpToken;
-    ERC20 private _rewardToken;
+    IERC20MintBurn private _rewardToken;
 
     struct Staker {
         uint256 claimed;
@@ -46,7 +47,7 @@ contract XXXStake is AccessControl, ReentrancyGuard {
 
         _dao = IDAO(dao);
         _lpToken = ERC20(lpToken);
-        _rewardToken = ERC20(rewardToken);
+        _rewardToken = IERC20MintBurn(rewardToken);
     }
     
     /// @notice Sets the reward percent
@@ -120,7 +121,7 @@ contract XXXStake is AccessControl, ReentrancyGuard {
             
         require(reward > c.claimed, "No unclaimed rewards");
 
-        _rewardToken.transfer(msg.sender, reward - c.claimed);
+        _rewardToken.mint(msg.sender, reward - c.claimed);
         c.claimed += reward; 
         
         return true; 
@@ -143,7 +144,7 @@ contract XXXStake is AccessControl, ReentrancyGuard {
             * ((block.timestamp - u.stakeTime) / _rewardRate);
         
         if(reward > u.claimed) {
-            _rewardToken.transfer(msg.sender, reward - u.claimed);
+            _rewardToken.mint(msg.sender, reward - u.claimed);
         }
 
         _lpToken.transfer(msg.sender, u.amount);

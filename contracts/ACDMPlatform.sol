@@ -26,7 +26,6 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
 
     bool private _isSaleRound;
 
-    // Commissions 
     uint256 private _firstRefererCommission = 50;
     uint256 private _secondRefererCommission = 30;
     uint256 private _tradeRefererCommission = 25;
@@ -34,13 +33,13 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
     uint256 private _totalCommissionEth;
     uint256 private _saleFinishTime;
     uint256 private _tradeFinishTime;
-    uint256 private _sellPriceEth;
     uint256 private _sellAmount;
+    uint256 public sellPriceEth;
     uint256 public orderCount;
     uint256 public tradeVolumeEth;
 
     mapping(address => address) private _refererOf;
-    mapping(uint256 => Order) private _orderbook;
+    mapping(uint256 => Order) public orderbook;
 
     IERC20MintBurn private _token;
     IDAO private _dao;
@@ -73,7 +72,8 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
 
     /**
      * Constructor
-     * Natspec
+     * @param token address of the token to trade and sell
+     * @param dao address of the DAO
      */
     constructor(address token, address dao) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -83,7 +83,9 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
         _dao = IDAO(dao);
     }
 
-
+    /**
+     * Registers a new user
+     */
     function register() external returns(bool) {
         require(
             !hasRole(REGISTERED, msg.sender),
@@ -95,7 +97,11 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
         return true;
     }
 
-
+    /**
+     * Registers a new user with a referrer
+     * @param referer Address of the referer
+     * @notice referer must be registered
+     */
     function registerWithReferer(address referer) external returns(bool) {
         require(
             !hasRole(REGISTERED, msg.sender), "You already registered");
@@ -108,26 +114,30 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
         return true;
     }
 
-
+    /**
+     * Start the sale round.
+     * @dev emits SaleRoundStarted event
+     * @notice can be called by anyone
+     */
     function startSaleRound() external returns(bool) {
         require(
             _saleFinishTime < block.timestamp && !_isSaleRound,
-            "Sale round is already started"
+            "Sale round already started"
             );
 
         _saleFinishTime = block.timestamp + 3 days;
         _isSaleRound = true;
 
-        if(_sellPriceEth > 0) {
-            _sellPriceEth +=
-                (_sellPriceEth * 3 / 100) + 4;
+        if(sellPriceEth > 0) {
+            sellPriceEth +=
+                (sellPriceEth * 3 / 100) + 4000000;
         } else {
-            // 0.0001 ETH
-            _sellPriceEth = 10000000000000;
+            // 0.00001 ETH
+            sellPriceEth = 10000000;
         }
 
         if(tradeVolumeEth > 0) {
-            _sellAmount = tradeVolumeEth / _sellPriceEth;
+            _sellAmount = tradeVolumeEth / sellPriceEth;
         } else {
             // 100 000 ACDM
             _sellAmount = 100000000000;
@@ -140,14 +150,22 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
         return true;
     }
 
-
+    /**
+     * Buy ACDM tokens for sended ETH
+     * @dev if provided more ETH, extra amount will send back
+     * if there is not enough ACDM tokens, available amount will send
+     * calculates amount to be minted from tradeVolume
+     * calculates ACDM price with exact formula
+     * emits SoldOut event when there is no more ACDM tokens
+     * @notice can be called only by registered user
+     */
     function buy() external payable onlyRole(REGISTERED) returns(bool) {
         require(
             _saleFinishTime > block.timestamp,
             "Sale round is not active"
             );
 
-        uint256 amount = msg.value / _sellPriceEth;
+        uint256 amount = msg.value / sellPriceEth;
 
         if (amount >= _sellAmount) {
             amount = _sellAmount;
@@ -163,19 +181,19 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
 
         if(firstReferer != address(0)) {
             payable(firstReferer).transfer(
-                _firstRefererCommission * amount / 1000
+                msg.value * _firstRefererCommission / 1000
                 );
 
             address secondReferer = _refererOf[firstReferer];
 
             if(secondReferer != address(0)) {
                 payable(secondReferer).transfer(
-                    _secondRefererCommission * amount / 1000
+                    msg.value * _secondRefererCommission / 1000
                     );
             }
         }
 
-        uint256 extraEth = msg.value - (amount * _sellPriceEth);
+        uint256 extraEth = msg.value - (amount * sellPriceEth);
 
         if (extraEth > 0) {
             payable(msg.sender).transfer(extraEth);
@@ -184,11 +202,16 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
         return true;
     }
 
-
+    /**
+     * Start the trade round
+     * @dev burns left ACDM tokens
+     * emits TradeRoundStarted event
+     * @notice can be called by anyone
+     */
     function startTradeRound() external returns(bool) {
         require(
             _tradeFinishTime < block.timestamp && _isSaleRound,
-            "Trade round is already started"
+            "Trade round already started"
             );
         
         if(_sellAmount > 0) {
@@ -204,15 +227,23 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
         return true;
     }
 
-
+    /**
+     * Create an order with a given price and amount
+     * @param price price of the order
+     * @param amount amount of the order
+     * @dev emits OrderCreated event
+     * @notice can be called only by registered user
+     * @return orderId of the created order
+     */
     function addOrder(uint256 price, uint256 amount) external
         onlyRole(REGISTERED) returns(uint256) {
             require(
-                _tradeFinishTime < block.timestamp,
+                _tradeFinishTime > block.timestamp,
                 "Trade round is not active"
                 );
-
-            Order storage o = _orderbook[orderCount];
+            
+            _token.transferFrom(msg.sender, address(this), amount);
+            Order storage o = orderbook[orderCount];
             o.seller = msg.sender;
             o.price = price;
             o.availableAmount = amount;
@@ -222,10 +253,16 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
             return orderCount++;
     }
 
-
+    /**
+     * Remove an order
+     * @param orderID id of the order
+     * @dev emits OrderRemoved event
+     * sends back left amount of ACDM tokens
+     * @notice can be called only by order owner
+     */
     function removeOrder(uint256 orderID) external
         onlyRole(REGISTERED) returns(bool) {
-            Order storage o = _orderbook[orderID];
+            Order storage o = orderbook[orderID];
 
             require(
                 o.seller == msg.sender,
@@ -241,15 +278,22 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
             return true;
     }
 
-
+    /**
+     * Redeems an order
+     * @param orderID id of the order
+     * @param amount amount of tokens to buy
+     * @dev emits OrderRedeemed event
+     * sends back extra ETH
+     * @notice can be called only by registered user
+     */
     function redeemOrder(uint256 orderID, uint256 amount) external payable
         onlyRole(REGISTERED) nonReentrant returns(bool) {
             require(
-                _tradeFinishTime < block.timestamp,
+                _tradeFinishTime > block.timestamp,
                 "Trade round is not active"
                 );
 
-            Order storage o = _orderbook[orderID];
+            Order storage o = orderbook[orderID];
             require(
                 o.availableAmount > 0,
                 "Order is already redeemed"
@@ -271,7 +315,7 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
             o.availableAmount -= amount;
 
             _token.transfer(msg.sender, amount);
-            payable(o.seller).transfer(amountEth - commissionEth);
+            payable(o.seller).transfer(amountEth - (commissionEth * 2));
 
             address firstReferer = _refererOf[msg.sender];
 
@@ -300,7 +344,11 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
             return true;
     }
 
-
+    /**
+     * Send all available ETH to the reciever
+     * @param reciever address of the receiver
+     * @notice can be called only by DAO voting
+     */
     function sendAll(address reciever) external payable
         onlyRole(DAO) returns(bool) {
             uint256 balance = address(this).balance;
@@ -312,26 +360,34 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
             return true;
     }
 
-
+    /**
+     * Send commission from trade rounds to the reciever
+     * @param reciever address of the receiver
+     * @notice can be called only by DAO voting
+     */
     function sendCommissionOnly(address reciever) external payable
-        onlyRole(DAO) returns(bool) {
+        onlyRole(DAO) nonReentrant returns(bool) {
             require(_totalCommissionEth > 0, "No commission to send");
 
-            _totalCommissionEth = 0;
             payable(reciever).transfer(_totalCommissionEth);
+            _totalCommissionEth = 0;
 
             return true;
     }
 
-
-    function burnForAll() external payable
+    /**
+     * Buys token from UniSwap to available ETH and burns them
+     * @param token address of the token to buy and burn
+     * @notice can be called only by DAO voting
+     */
+    function burnForAll(address token) external payable
         onlyRole(DAO) returns(bool) {
             uint256 balance = address(this).balance;
             require(balance > 0, "Zero balance to burn");
 
             address[] memory path;
             path[0] = _weth; 
-            path[1] = address(_token);
+            path[1] = token;
 
             uint256[] memory minOutAmounts =
                 IUniswapV2Router01(_uniV2Router)
@@ -345,12 +401,16 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
                     block.timestamp
                 );
 
-            _token.burn(minOutAmounts[1]);
+            IERC20MintBurn(token).burn(minOutAmounts[1]);
 
             return true;
     }
 
-
+    /**
+     * Sets trade referer commission
+     * @param commission commission as percent multilplied by 10
+     * @notice can be called only by DAO voting
+     */
     function setTradeCommission(uint256 commission) external
         onlyRole(DAO) returns(bool) {
             _tradeRefererCommission = commission;
@@ -358,7 +418,11 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
             return true;
     }
 
-
+    /**
+     * Sets first referer commission
+     * @param commission commission as percent multilplied by 10
+     * @notice can be called only by DAO voting
+     */
     function setFirstRefererCommission(uint256 commission) external
         onlyRole(DAO) returns(bool) {
             _firstRefererCommission = commission;
@@ -366,7 +430,11 @@ contract ACDMPlatform is AccessControl, ReentrancyGuard {
             return true;
     }
 
-
+    /**
+     * Sets second referer commission
+     * @param commission commission as percent multilplied by 10
+     * @notice can be called only by DAO voting
+     */
     function setSecondRefererCommission(uint256 commission) external
         onlyRole(DAO) returns(bool) {
             _secondRefererCommission = commission;

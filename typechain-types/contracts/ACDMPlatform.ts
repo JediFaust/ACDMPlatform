@@ -33,18 +33,20 @@ export interface ACDMPlatformInterface extends utils.Interface {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "REGISTERED()": FunctionFragment;
     "addOrder(uint256,uint256)": FunctionFragment;
-    "burnForAll()": FunctionFragment;
+    "burnForAll(address)": FunctionFragment;
     "buy()": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
     "grantRole(bytes32,address)": FunctionFragment;
     "hasRole(bytes32,address)": FunctionFragment;
     "orderCount()": FunctionFragment;
+    "orderbook(uint256)": FunctionFragment;
     "redeemOrder(uint256,uint256)": FunctionFragment;
     "register()": FunctionFragment;
     "registerWithReferer(address)": FunctionFragment;
     "removeOrder(uint256)": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
+    "sellPriceEth()": FunctionFragment;
     "sendAll(address)": FunctionFragment;
     "sendCommissionOnly(address)": FunctionFragment;
     "setFirstRefererCommission(uint256)": FunctionFragment;
@@ -68,12 +70,14 @@ export interface ACDMPlatformInterface extends utils.Interface {
       | "grantRole"
       | "hasRole"
       | "orderCount"
+      | "orderbook"
       | "redeemOrder"
       | "register"
       | "registerWithReferer"
       | "removeOrder"
       | "renounceRole"
       | "revokeRole"
+      | "sellPriceEth"
       | "sendAll"
       | "sendCommissionOnly"
       | "setFirstRefererCommission"
@@ -98,10 +102,7 @@ export interface ACDMPlatformInterface extends utils.Interface {
     functionFragment: "addOrder",
     values: [BigNumberish, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "burnForAll",
-    values?: undefined
-  ): string;
+  encodeFunctionData(functionFragment: "burnForAll", values: [string]): string;
   encodeFunctionData(functionFragment: "buy", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
@@ -118,6 +119,10 @@ export interface ACDMPlatformInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "orderCount",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "orderbook",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "redeemOrder",
@@ -139,6 +144,10 @@ export interface ACDMPlatformInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "revokeRole",
     values: [BytesLike, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "sellPriceEth",
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "sendAll", values: [string]): string;
   encodeFunctionData(
@@ -190,6 +199,7 @@ export interface ACDMPlatformInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "orderCount", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "orderbook", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "redeemOrder",
     data: BytesLike
@@ -208,6 +218,10 @@ export interface ACDMPlatformInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "sellPriceEth",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "sendAll", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "sendCommissionOnly",
@@ -407,6 +421,7 @@ export interface ACDMPlatform extends BaseContract {
     ): Promise<ContractTransaction>;
 
     burnForAll(
+      token: string,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -429,6 +444,17 @@ export interface ACDMPlatform extends BaseContract {
     ): Promise<[boolean]>;
 
     orderCount(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    orderbook(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [string, BigNumber, BigNumber] & {
+        seller: string;
+        price: BigNumber;
+        availableAmount: BigNumber;
+      }
+    >;
 
     redeemOrder(
       orderID: BigNumberish,
@@ -461,6 +487,8 @@ export interface ACDMPlatform extends BaseContract {
       account: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    sellPriceEth(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     sendAll(
       reciever: string,
@@ -516,6 +544,7 @@ export interface ACDMPlatform extends BaseContract {
   ): Promise<ContractTransaction>;
 
   burnForAll(
+    token: string,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -538,6 +567,17 @@ export interface ACDMPlatform extends BaseContract {
   ): Promise<boolean>;
 
   orderCount(overrides?: CallOverrides): Promise<BigNumber>;
+
+  orderbook(
+    arg0: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<
+    [string, BigNumber, BigNumber] & {
+      seller: string;
+      price: BigNumber;
+      availableAmount: BigNumber;
+    }
+  >;
 
   redeemOrder(
     orderID: BigNumberish,
@@ -570,6 +610,8 @@ export interface ACDMPlatform extends BaseContract {
     account: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  sellPriceEth(overrides?: CallOverrides): Promise<BigNumber>;
 
   sendAll(
     reciever: string,
@@ -624,7 +666,7 @@ export interface ACDMPlatform extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    burnForAll(overrides?: CallOverrides): Promise<boolean>;
+    burnForAll(token: string, overrides?: CallOverrides): Promise<boolean>;
 
     buy(overrides?: CallOverrides): Promise<boolean>;
 
@@ -643,6 +685,17 @@ export interface ACDMPlatform extends BaseContract {
     ): Promise<boolean>;
 
     orderCount(overrides?: CallOverrides): Promise<BigNumber>;
+
+    orderbook(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [string, BigNumber, BigNumber] & {
+        seller: string;
+        price: BigNumber;
+        availableAmount: BigNumber;
+      }
+    >;
 
     redeemOrder(
       orderID: BigNumberish,
@@ -673,6 +726,8 @@ export interface ACDMPlatform extends BaseContract {
       account: string,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    sellPriceEth(overrides?: CallOverrides): Promise<BigNumber>;
 
     sendAll(reciever: string, overrides?: CallOverrides): Promise<boolean>;
 
@@ -801,6 +856,7 @@ export interface ACDMPlatform extends BaseContract {
     ): Promise<BigNumber>;
 
     burnForAll(
+      token: string,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -826,6 +882,11 @@ export interface ACDMPlatform extends BaseContract {
     ): Promise<BigNumber>;
 
     orderCount(overrides?: CallOverrides): Promise<BigNumber>;
+
+    orderbook(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     redeemOrder(
       orderID: BigNumberish,
@@ -858,6 +919,8 @@ export interface ACDMPlatform extends BaseContract {
       account: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    sellPriceEth(overrides?: CallOverrides): Promise<BigNumber>;
 
     sendAll(
       reciever: string,
@@ -916,6 +979,7 @@ export interface ACDMPlatform extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     burnForAll(
+      token: string,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -941,6 +1005,11 @@ export interface ACDMPlatform extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     orderCount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    orderbook(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     redeemOrder(
       orderID: BigNumberish,
@@ -973,6 +1042,8 @@ export interface ACDMPlatform extends BaseContract {
       account: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    sellPriceEth(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     sendAll(
       reciever: string,

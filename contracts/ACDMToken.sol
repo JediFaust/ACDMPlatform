@@ -13,7 +13,8 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 contract ACDMToken is ERC20, ERC20Burnable, AccessControl {
    bytes32 public constant MINTER = keccak256("MINTER");
 
-   /// @notice Deploys the contract with the initial parameters(name, symbol, initial supply)
+   /// @notice Deploys the contract with the initial
+   /// parameters(name, symbol, initial supply)
    /// @dev ADMIN is the address that deploys the contract
    /// @param _name Name of the token
    /// @param _symbol Symbol of the token

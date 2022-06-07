@@ -39,11 +39,13 @@ export interface XXXDAOInterface extends utils.Interface {
     "getRoleAdmin(bytes32)": FunctionFragment;
     "grantRole(bytes32,address)": FunctionFragment;
     "hasRole(bytes32,address)": FunctionFragment;
+    "proposals(uint256)": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
     "setStakeContract(address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "vote(uint256,uint256,bool)": FunctionFragment;
+    "voters(address)": FunctionFragment;
   };
 
   getFunction(
@@ -59,11 +61,13 @@ export interface XXXDAOInterface extends utils.Interface {
       | "getRoleAdmin"
       | "grantRole"
       | "hasRole"
+      | "proposals"
       | "renounceRole"
       | "revokeRole"
       | "setStakeContract"
       | "supportsInterface"
       | "vote"
+      | "voters"
   ): FunctionFragment;
 
   encodeFunctionData(functionFragment: "CHAIRMAN", values?: undefined): string;
@@ -99,6 +103,10 @@ export interface XXXDAOInterface extends utils.Interface {
     values: [BytesLike, string]
   ): string;
   encodeFunctionData(
+    functionFragment: "proposals",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "renounceRole",
     values: [BytesLike, string]
   ): string;
@@ -118,6 +126,7 @@ export interface XXXDAOInterface extends utils.Interface {
     functionFragment: "vote",
     values: [BigNumberish, BigNumberish, boolean]
   ): string;
+  encodeFunctionData(functionFragment: "voters", values: [string]): string;
 
   decodeFunctionResult(functionFragment: "CHAIRMAN", data: BytesLike): Result;
   decodeFunctionResult(
@@ -145,6 +154,7 @@ export interface XXXDAOInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "proposals", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceRole",
     data: BytesLike
@@ -159,6 +169,7 @@ export interface XXXDAOInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "vote", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "voters", data: BytesLike): Result;
 
   events: {
     "FinishedProposal(uint256,bool,uint256,uint256)": EventFragment;
@@ -308,6 +319,20 @@ export interface XXXDAO extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
+    proposals(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber, string, string, string] & {
+        finishTime: BigNumber;
+        votesFor: BigNumber;
+        votesAgainst: BigNumber;
+        recipient: string;
+        callData: string;
+        description: string;
+      }
+    >;
+
     renounceRole(
       role: BytesLike,
       account: string,
@@ -336,6 +361,13 @@ export interface XXXDAO extends BaseContract {
       isVoteFor: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    voters(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber] & { votes: BigNumber; withdrawTime: BigNumber }
+    >;
   };
 
   CHAIRMAN(overrides?: CallOverrides): Promise<string>;
@@ -381,6 +413,20 @@ export interface XXXDAO extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
+  proposals(
+    arg0: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber, BigNumber, BigNumber, string, string, string] & {
+      finishTime: BigNumber;
+      votesFor: BigNumber;
+      votesAgainst: BigNumber;
+      recipient: string;
+      callData: string;
+      description: string;
+    }
+  >;
+
   renounceRole(
     role: BytesLike,
     account: string,
@@ -409,6 +455,13 @@ export interface XXXDAO extends BaseContract {
     isVoteFor: boolean,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  voters(
+    arg0: string,
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber, BigNumber] & { votes: BigNumber; withdrawTime: BigNumber }
+  >;
 
   callStatic: {
     CHAIRMAN(overrides?: CallOverrides): Promise<string>;
@@ -449,6 +502,20 @@ export interface XXXDAO extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
+    proposals(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber, string, string, string] & {
+        finishTime: BigNumber;
+        votesFor: BigNumber;
+        votesAgainst: BigNumber;
+        recipient: string;
+        callData: string;
+        description: string;
+      }
+    >;
+
     renounceRole(
       role: BytesLike,
       account: string,
@@ -477,6 +544,13 @@ export interface XXXDAO extends BaseContract {
       isVoteFor: boolean,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    voters(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber] & { votes: BigNumber; withdrawTime: BigNumber }
+    >;
   };
 
   filters: {
@@ -585,6 +659,11 @@ export interface XXXDAO extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    proposals(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     renounceRole(
       role: BytesLike,
       account: string,
@@ -613,6 +692,8 @@ export interface XXXDAO extends BaseContract {
       isVoteFor: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    voters(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -667,6 +748,11 @@ export interface XXXDAO extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    proposals(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     renounceRole(
       role: BytesLike,
       account: string,
@@ -694,6 +780,11 @@ export interface XXXDAO extends BaseContract {
       amount: BigNumberish,
       isVoteFor: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    voters(
+      arg0: string,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };
 }
